@@ -38,11 +38,16 @@ async def test(interaction):
 
 
 @bot.tree.command(name='create-webhook', description='Creates webhook for translation')
-@app_commands.describe(channelfrom='Channel from')
-async def create(interaction, channelfrom: discord.TextChannel):
-    await interaction.response.send_message(f"from {channelfrom} to {interaction.channel}", ephemeral=True)
-    webhook = await interaction.channel.create_webhook(name="Translate")
-    db.create_webhook(interaction.channel.id, channelfrom.id, webhook.id, webhook.url)
+@app_commands.describe(fromchannel='From Channel')
+@app_commands.choices(tolanguage=[
+    app_commands.Choice(name="English", value="en"),
+    app_commands.Choice(name="Українська", value="uk"),
+    app_commands.Choice(name="Російська", value="ru")
+])
+async def create(interaction, fromchannel: discord.TextChannel, tolanguage: app_commands.Choice[str]):
+    await interaction.response.send_message(f"from <#{fromchannel.id}> to <#{interaction.channel.id}>", ephemeral=True)
+    webhook = await interaction.channel.create_webhook(name=f"TranslateTo{tolanguage.name}")
+    db.create_webhook(interaction.channel.id, fromchannel.id, webhook.id, webhook.url, tolanguage.value)
 
 
 @bot.tree.context_menu(name="Translate to English")
@@ -83,15 +88,15 @@ async def on_message(message):
     avatar_url = message.author.display_avatar
 
     if db.get_webhookurl(message.channel.id) is not None:
-        translated_content = GoogleTranslator(source='auto', target='en').translate(content)
-        webhook_url = db.get_webhookurl(message.channel.id)[0]
+        webhook_url = db.get_webhookurl(message.channel.id)
+        translated_content = GoogleTranslator(source='auto', target=webhook_url[1]).translate(content)
     else:
         return
 
     if message.attachments:
         msg = message.attachments[0].url
 
-    webhook = Webhook.from_url(webhook_url, client=bot)
+    webhook = Webhook.from_url(webhook_url[0], client=bot)
     await webhook.send(f"{str(translated_content)}\n{msg}", username=username, avatar_url=avatar_url)
 
 
