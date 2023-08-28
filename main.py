@@ -6,7 +6,7 @@ from discord import app_commands
 from discord.ext import commands
 from deep_translator import GoogleTranslator
 
-intents = discord.Intents.default()
+intents = discord.Intents.all()
 intents.message_content = True
 bot = commands.Bot(command_prefix='>', intents=intents)
 db = Database("webhook.db")
@@ -42,8 +42,34 @@ async def test(interaction):
 async def create(interaction, channelfrom: discord.TextChannel):
     await interaction.response.send_message(f"from {channelfrom} to {interaction.channel}", ephemeral=True)
     webhook = await interaction.channel.create_webhook(name="Translate")
-    db.create_webhook(interaction.channel.id, channelfrom.id, webhook.id, webhook.url)\
+    db.create_webhook(interaction.channel.id, channelfrom.id, webhook.id, webhook.url)
 
+
+@bot.tree.context_menu(name="Translate to English")
+async def translate(interaction, message: discord.Message):
+    content = message.content
+    username = message.author.display_name
+
+    translated_content = GoogleTranslator(source='auto', target='en').translate(content)
+    await interaction.response.send_message(f"{username} said:\n{translated_content}", ephemeral=True)
+
+
+@bot.tree.context_menu(name="Перекласти на Українську")
+async def translate_toua(interaction, message: discord.Message):
+    content = message.content
+    username = message.author.display_name
+
+    translated_content = GoogleTranslator(source='auto', target='uk').translate(content)
+    await interaction.response.send_message(f"{username} said:\n{translated_content}", ephemeral=True)
+
+
+@bot.tree.context_menu(name="Перевести на Русский")
+async def translate_toru(interaction, message: discord.Message):
+    content = message.content
+    username = message.author.display_name
+
+    translated_content = GoogleTranslator(source='auto', target='ru').translate(content)
+    await interaction.response.send_message(f"{username} said:\n{translated_content}", ephemeral=True)
 
 
 @bot.event
