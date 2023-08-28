@@ -41,11 +41,11 @@ async def test(interaction):
 @app_commands.describe(fromchannel='From Channel')
 @app_commands.choices(tolanguage=[
     app_commands.Choice(name="English", value="en"),
-    app_commands.Choice(name="Українська", value="uk"),
-    app_commands.Choice(name="Російська", value="ru")
+    app_commands.Choice(name="Ukrainian", value="uk"),
+    app_commands.Choice(name="Russian", value="ru")
 ])
 async def create(interaction, fromchannel: discord.TextChannel, tolanguage: app_commands.Choice[str]):
-    await interaction.response.send_message(f"from <#{fromchannel.id}> to <#{interaction.channel.id}>", ephemeral=True)
+    await interaction.response.send_message(f"from <#{fromchannel.id}> to <#{interaction.channel.id}> to {tolanguage.name}", ephemeral=True)
     webhook = await interaction.channel.create_webhook(name=f"TranslateTo{tolanguage.name}")
     db.create_webhook(interaction.channel.id, fromchannel.id, webhook.id, webhook.url, tolanguage.value)
 
