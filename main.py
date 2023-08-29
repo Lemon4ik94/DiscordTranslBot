@@ -80,7 +80,7 @@ async def translate_toru(interaction, message: discord.Message):
 
 @bot.event
 async def on_message(message):
-    msg = ''
+    pic = ''
     if message.author == bot.user or message.author.bot:
         return
 
@@ -96,11 +96,13 @@ async def on_message(message):
     for element in webhook_url:
 
         translated_content = GoogleTranslator(source='auto', target=element[1]).translate(content)
+        if translated_content is not None:
+            content = translated_content
         if message.attachments:
-            msg = message.attachments[0].url
+            pic = message.attachments[0].url
 
         webhook = Webhook.from_url(element[0], client=bot)
-        await webhook.send(f"{str(translated_content)}\n{msg}", username=username, avatar_url=avatar_url)
+        await webhook.send(f"{content}\n{pic}", username=username, avatar_url=avatar_url)
 
 
 bot.run(token)
