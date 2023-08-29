@@ -7,9 +7,9 @@ class Database:
 		self.connection = sqlite3.connect(db_file)
 		self.cursor = self.connection.cursor()
 
-	def create_webhook(self, channelid, channelfrom, webhookid, webhook, language):
+	def create_webhook(self, webhookid, channelid, channelfrom, webhook, language):
 		with self.connection:
-			return self.connection.execute("INSERT INTO webhooks VALUES (?, ?, ?, ?, ?)", (channelid, channelfrom, webhookid, webhook, language))
+			return self.connection.execute(f"INSERT INTO webhooks VALUES ('{webhookid}', '{channelid}', '{channelfrom}', '{webhook}', '{language}')")
 
 	def delete_webhook(self, webhookid):
 		with self.connection:
@@ -17,7 +17,7 @@ class Database:
 
 	def get_webhookurl(self, channelfrom):
 		with self.connection:
-			return self.connection.execute("SELECT webhook, language FROM webhooks WHERE channelfrom = ?", (channelfrom,)).fetchone()
+			return self.connection.execute("SELECT webhook, language FROM webhooks WHERE channelfrom = ?", (channelfrom,)).fetchall()
 
 	def get_webhooks(self, channelid):
 		with self.connection:

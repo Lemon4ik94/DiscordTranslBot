@@ -16,8 +16,9 @@ db = Database("webhook.db")
 async def on_webhooks_update(channel):
     dbwebhooks = db.get_webhooks(channel.id)
     webhooks = await channel.webhooks()
+
     for dbwebhook in dbwebhooks:
-        if dbwebhook in webhooks:
+        if dbwebhook in [e.id for e in webhooks]:
             pass
         else:
             db.delete_webhook(dbwebhook)
@@ -47,7 +48,7 @@ async def test(interaction):
 async def create(interaction, fromchannel: discord.TextChannel, tolanguage: app_commands.Choice[str]):
     await interaction.response.send_message(f"from <#{fromchannel.id}> to <#{interaction.channel.id}> to {tolanguage.name}", ephemeral=True)
     webhook = await interaction.channel.create_webhook(name=f"TranslateTo{tolanguage.name}")
-    db.create_webhook(interaction.channel.id, fromchannel.id, webhook.id, webhook.url, tolanguage.value)
+    db.create_webhook(webhook.id, interaction.channel.id, fromchannel.id, webhook.url, tolanguage.value)
 
 
 @bot.tree.context_menu(name="Translate to English")
@@ -89,15 +90,17 @@ async def on_message(message):
 
     if db.get_webhookurl(message.channel.id) is not None:
         webhook_url = db.get_webhookurl(message.channel.id)
-        translated_content = GoogleTranslator(source='auto', target=webhook_url[1]).translate(content)
     else:
         return
 
-    if message.attachments:
-        msg = message.attachments[0].url
+    for element in webhook_url:
 
-    webhook = Webhook.from_url(webhook_url[0], client=bot)
-    await webhook.send(f"{str(translated_content)}\n{msg}", username=username, avatar_url=avatar_url)
+        translated_content = GoogleTranslator(source='auto', target=element[1]).translate(content)
+        if message.attachments:
+            msg = message.attachments[0].url
+
+        webhook = Webhook.from_url(element[0], client=bot)
+        await webhook.send(f"{str(translated_content)}\n{msg}", username=username, avatar_url=avatar_url)
 
 
 bot.run(token)
