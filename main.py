@@ -4,8 +4,9 @@ from database import Database
 from discord import Webhook
 from discord import app_commands
 from discord.ext import commands
-from deep_translator import GoogleTranslator
+import deepl
 
+translator = deepl.Translator(auth_key)
 intents = discord.Intents.all()
 intents.message_content = True
 bot = commands.Bot(command_prefix='>', intents=intents)
@@ -41,9 +42,9 @@ async def test(interaction):
 @bot.tree.command(name='create-webhook', description='Creates webhook for translation')
 @app_commands.describe(fromchannel='From Channel')
 @app_commands.choices(tolanguage=[
-    app_commands.Choice(name="English", value="en"),
-    app_commands.Choice(name="Ukrainian", value="uk"),
-    app_commands.Choice(name="Russian", value="ru")
+    app_commands.Choice(name="English", value="EN-US"),
+    app_commands.Choice(name="Ukrainian", value="UK"),
+    app_commands.Choice(name="Russian", value="RU")
 ])
 async def create(interaction, fromchannel: discord.TextChannel, tolanguage: app_commands.Choice[str]):
     await interaction.response.send_message(f"from <#{fromchannel.id}> to <#{interaction.channel.id}> to {tolanguage.name}", ephemeral=True)
@@ -56,7 +57,7 @@ async def translate(interaction, message: discord.Message):
     content = message.content
     username = message.author.display_name
 
-    translated_content = GoogleTranslator(source='auto', target='en').translate(content)
+    translated_content = translator.translate_text(content, target_lang="EN-US")
     await interaction.response.send_message(f"{username} said:\n{translated_content}", ephemeral=True)
 
 
@@ -65,7 +66,7 @@ async def translate_toua(interaction, message: discord.Message):
     content = message.content
     username = message.author.display_name
 
-    translated_content = GoogleTranslator(source='auto', target='uk').translate(content)
+    translated_content = translator.translate_text(content, target_lang="UK")
     await interaction.response.send_message(f"{username} said:\n{translated_content}", ephemeral=True)
 
 
@@ -74,7 +75,7 @@ async def translate_toru(interaction, message: discord.Message):
     content = message.content
     username = message.author.display_name
 
-    translated_content = GoogleTranslator(source='auto', target='ru').translate(content)
+    translated_content = translator.translate_text(content, target_lang="RU")
     await interaction.response.send_message(f"{username} said:\n{translated_content}", ephemeral=True)
 
 
@@ -95,7 +96,11 @@ async def on_message(message):
 
     for element in webhook_url:
 
-        translated_content = GoogleTranslator(source='auto', target=element[1]).translate(content)
+        if content:
+            translated_content = translator.translate_text(str(content), target_lang=element[1])
+        else:
+            translated_content = ""
+
         if translated_content is not None:
             content = translated_content
         if message.attachments:
