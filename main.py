@@ -34,11 +34,6 @@ async def on_ready():
         print(e)
 
 
-@bot.tree.command(name='test')
-async def test(interaction):
-    await interaction.response.send_message(interaction.channel, ephemeral=True)
-
-
 @bot.tree.command(name='create-webhook', description='Creates webhook for translation')
 @app_commands.describe(fromchannel='From Channel')
 @app_commands.choices(tolanguage=[
@@ -107,7 +102,11 @@ async def on_message(message):
             pic = message.attachments[0].url
 
         webhook = Webhook.from_url(element[0], client=bot)
-        await webhook.send(f"{content}\n{pic}", username=username, avatar_url=avatar_url)
+        try:
+            await webhook.send(f"{content}\n{pic}", username=username, avatar_url=avatar_url)
+        except discord.errors.NotFound:
+            print(f"Webhook {webhook.id} was not found on the server. Deleting it from db...")
+            db.delete_webhook(webhook.id)
 
 
 bot.run(token)
