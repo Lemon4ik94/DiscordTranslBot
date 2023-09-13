@@ -76,13 +76,21 @@ async def translate_toru(interaction, message: discord.Message):
 
 @bot.event
 async def on_message(message):
-    pic = ''
+    picurl = ''
     if message.author == bot.user or message.author.bot:
         return
 
     content = message.content
     username = message.author.display_name
     avatar_url = message.author.display_avatar
+
+    pings = ""
+    for c in content.split(" "):
+        if '@' in c:
+            user_id = int(c[2:-1])
+            c = f"@{bot.get_user(user_id).global_name} "
+        pings += c
+    content = pings
 
     if db.get_webhookurl(message.channel.id) is not None:
         webhook_url = db.get_webhookurl(message.channel.id)
@@ -99,11 +107,13 @@ async def on_message(message):
         if translated_content is not None:
             content = translated_content
         if message.attachments:
-            pic = message.attachments[0].url
+            for pic in message.attachments:
+                picurl += pic.url + "\n"
+                print(picurl)
 
         webhook = Webhook.from_url(element[0], client=bot)
         try:
-            await webhook.send(f"{content}\n{pic}", username=username, avatar_url=avatar_url)
+            await webhook.send(f"{content}\n\n{picurl}", username=username, avatar_url=avatar_url)
         except discord.errors.NotFound:
             print(f"Webhook {webhook.id} was not found on the server. Deleting it from db...")
             db.delete_webhook(webhook.id)
