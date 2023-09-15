@@ -1,4 +1,5 @@
 from cfg import *
+import re
 import discord
 from database import Database
 from discord import Webhook
@@ -74,6 +75,16 @@ async def translate_toru(interaction, message: discord.Message):
     await interaction.response.send_message(f"{username} said:\n{translated_content}", ephemeral=True)
 
 
+def user_ping(word):
+    if "<@" in word:
+        word = re.split(r"<@([\d_ ]+)>", word)
+        word[1] = f"@{bot.get_user(int(word[1])).global_name}"
+
+        return " ".join(word)
+    else:
+        return word
+
+
 @bot.event
 async def on_message(message):
     picurl = ''
@@ -84,13 +95,7 @@ async def on_message(message):
     username = message.author.display_name
     avatar_url = message.author.display_avatar
 
-    pings = ""
-    for c in content.split(" "):
-        if '@' in c:
-            user_id = int(c[2:-1])
-            c = f"@{bot.get_user(user_id).global_name} "
-        pings += c
-    content = pings
+    content = " ".join(list(map(user_ping, content.split(" "))))
 
     if db.get_webhookurl(message.channel.id) is not None:
         webhook_url = db.get_webhookurl(message.channel.id)
@@ -106,10 +111,13 @@ async def on_message(message):
 
         if translated_content is not None:
             content = translated_content
+
         if message.attachments:
             for pic in message.attachments:
-                picurl += pic.url + "\n"
-                print(picurl)
+                if pic.is_spoiler():
+                    picurl += f"||{pic.url}||\n"
+                else:
+                    picurl += pic.url + "\n"
 
         webhook = Webhook.from_url(element[0], client=bot)
         try:
