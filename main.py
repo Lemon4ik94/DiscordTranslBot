@@ -87,7 +87,7 @@ def user_ping(word):
 
 @bot.event
 async def on_message(message):
-    picurl = ''
+    pictures = []
     if message.author == bot.user or message.author.bot:
         return
 
@@ -115,13 +115,13 @@ async def on_message(message):
         if message.attachments:
             for pic in message.attachments:
                 if pic.is_spoiler():
-                    picurl += f"||{pic.url}||\n"
+                    pictures.append(await pic.to_file(spoiler=True))
                 else:
-                    picurl += pic.url + "\n"
+                    pictures.append(await pic.to_file(spoiler=False))
 
         webhook = Webhook.from_url(element[0], client=bot)
         try:
-            await webhook.send(f"{content}\n\n{picurl}", username=username, avatar_url=avatar_url)
+            await webhook.send(f"{content}", username=username, avatar_url=avatar_url, files=pictures)
         except discord.errors.NotFound:
             print(f"Webhook {webhook.id} was not found on the server. Deleting it from db...")
             db.delete_webhook(webhook.id)
