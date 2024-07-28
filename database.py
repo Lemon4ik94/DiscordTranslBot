@@ -7,6 +7,17 @@ class Database:
 		self.connection = sqlite3.connect(db_file)
 		self.cursor = self.connection.cursor()
 
+		try:
+			self.connection.execute(f"SELECT * FROM webhooks")
+		except sqlite3.OperationalError as error:
+			self.connection.execute('''CREATE TABLE IF NOT EXISTS webhooks (
+webhookid   INTEGER,
+channelid   INTEGER,
+channelfrom INTEGER,
+webhook     TEXT,
+language    TEXT
+);''')
+
 	def create_webhook(self, webhookid, channelid, channelfrom, webhook, language):
 		with self.connection:
 			return self.connection.execute(f"INSERT INTO webhooks VALUES ('{webhookid}', '{channelid}', '{channelfrom}', '{webhook}', '{language}')")
