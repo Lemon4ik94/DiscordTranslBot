@@ -11,7 +11,7 @@ translator = deepl.Translator(auth_key)
 intents = discord.Intents.all()
 intents.message_content = True
 bot = commands.Bot(command_prefix='>', intents=intents)
-db = Database("wh.db")
+db = Database("webhook.db")
 
 
 @bot.event
